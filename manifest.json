@@ -1,0 +1,11 @@
+{
+  "manifest_version": 2,
+  "name": "WebRTC test",
+  "version": "0.1",
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "permissions": [
+    "notifications"
+  ]
+}

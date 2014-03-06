@@ -1,0 +1,102 @@
+
+<html>
+
+<head>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <style>.onready { display:none; }</style>
+</head>
+
+<body>
+    <div class="container">
+    	<h4>Enter your chat name and name of the user you want to connect</h4>
+        <div class="row">
+            <div class="col-md-6">
+	            <div class="form-group">
+	            	<label>You</label>
+	                <input type="text" class="form-control" id="myName" placeholder="Enter your chat name">
+	            </div>
+	        </div>
+	        <div class="col-md-5">
+	            <div class="form-group">
+	            	<label>Contact</label>
+	                <input type="text" class="form-control" id="userName" placeholder="Enter user chat name">
+	            </div>
+	        </div>
+	        <div class="col-md-1" style="padding-top:24px">
+	        	<button type="button" id="saveName" class="btn btn-default">Enter</button>
+	        </div>
+        </div>
+        <div class="waiting" style="display:none;text-align:center">Waiting for connection...</div>
+        <div class="form-group onready">
+        	<textarea class="form-control" style="width:100%;height:300px" id="log"></textarea>
+        </div>
+        <div class="onready">
+            <div class="row">
+                <div class="col-md-10">
+                    <input class="form-control" type="text" id="input" style="width:100%">
+                </div>
+                <div class="col-md-2">
+                    <button id="send" class="btn btn-primary">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script src="http://cdn.peerjs.com/0.3/peer.js"></script>
+    <script language="javascript">
+    var peer, conn, connected = false;
+    
+    /**
+     * When "Enter" button clicked we need to: 
+     * - disable user/contact fields and enable "waiting" block
+     * - create p2p connection
+     * - add listener to get notified when second user is connected
+     */
+    $('#saveName').click(function() {
+    	$('.waiting').show();
+    	$('#saveName').prop('disabled', true);
+		peer = new Peer($('#myName').val(), {key: '{{YOUR_PEERJS_KEY}}'});
+		conn = peer.connect($('#userName').val());
+		conn.on('open', onConnect);
+		conn.on('data', function(data){
+	    	addMessage($('#userName').val(), data);
+	  	});
+		peer.on('connection', function(externalConnection) {
+			if (!connected) {
+				conn = peer.connect($('#userName').val());
+				onConnect();
+			}
+		  	externalConnection.on('data', function(data){
+		    	addMessage($('#userName').val(), data);
+		  	});
+		});
+    })
+
+    /**
+     * When second user is connected we can show chat controls and hide waiting block
+     */
+    function onConnect() {
+        connected = true;
+        $('.waiting').hide();
+        $('#myName, #userName').prop('disabled', true);
+        $('.onready').slideDown();
+    }
+
+    /**
+     * This functions adds message to local chat log
+     */
+    function addMessage(author, message) {
+        $('#log').text($('#log').text() + author + ": " + message + "\n");
+    }
+
+    /**
+     * Add new chat message locally and send via DataChannel
+     */
+    $('#send').click(function() {
+        conn.send($('#input').val());
+        addMessage('You', $('#input').val());
+        $('#input').val('');
+    })
+    </script>
+</body>
